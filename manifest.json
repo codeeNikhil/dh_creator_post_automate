@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Dailyhunt Auto Poster",
+  "version": "1.0.0",
+  "description": "Generate quote image posts with templates and publish to Dailyhunt.",
+  "permissions": ["storage", "activeTab", "scripting", "clipboardWrite", "tabs"],
+  "host_permissions": ["*://*.dailyhunt.in/*", "*://*.dailyhunt.com/*"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.dailyhunt.in/*", "*://*.dailyhunt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
