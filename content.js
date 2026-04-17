@@ -25,7 +25,11 @@ async function publishToDailyhunt(imageBase64, quote, sendResponse) {
 			}
 		}
 
-		if (!createBtn) throw new Error('Create Post button not found');
+		if (!createBtn) {
+			console.error('[DH Auto Poster] Available buttons:', buttons.map(b => b.textContent?.trim()).slice(0, 10));
+			throw new Error('Create Post button not found');
+		}
+		
 		const dispatchClick = (el) => {
 			el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
 			el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
@@ -39,17 +43,29 @@ async function publishToDailyhunt(imageBase64, quote, sendResponse) {
 		await new Promise(resolve => setTimeout(resolve, 2000));
 
 		// Step 2: Click "Image/Meme" option
-		const cards = Array.from(document.querySelectorAll('.ant-card.modalCard.ant-card-bordered.ant-card-hoverable'));
-		const imageOption = cards.find(card => {
-			const img = card.querySelector('img.createModalImage');
+		await new Promise(resolve => setTimeout(resolve, 800));
+		
+		// Find the Image/Meme card by looking for the h1 with "Image/Meme" text
+		const allCards = Array.from(document.querySelectorAll('.ant-card.modalCard'));
+		const imageCard = allCards.find(card => {
 			const header = card.querySelector('h1.modalHeader');
-			return img && img.src.includes('meme') && header && header.textContent.includes('Image/Meme');
+			return header && header.textContent.trim() === 'Image/Meme';
 		});
 		
-		if (!imageOption) throw new Error('Image/Meme option not found');
+		if (!imageCard) {
+			console.error('[DH Auto Poster] Modal cards found:', allCards.map(c => c.querySelector('h1')?.textContent).filter(Boolean));
+			throw new Error('Image/Meme card not found');
+		}
 		
-		imageOption.click();
-		console.log('[DH Auto Poster] Clicked Image/Meme');
+		// Click the card
+		const dispatchClick2 = (el) => {
+			el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+			el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+			el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+		};
+		
+		dispatchClick2(imageCard);
+		console.log('[DH Auto Poster] Clicked Image/Meme card');
 
 		// Wait for next page
 		await new Promise(resolve => setTimeout(resolve, 1500));
