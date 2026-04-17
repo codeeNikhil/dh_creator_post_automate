@@ -11,11 +11,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function publishToDailyhunt(imageBase64, quote, sendResponse) {
 	try {
 		// Step 1: Click "Create Post" button
-		const buttons = Array.from(document.querySelectorAll('button'));
-		let createBtn = buttons.find(b => b.textContent.includes('Create Post'));
-		
+		const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
+		let createBtn = buttons.find(b => {
+			const text = b.textContent?.trim() || '';
+			return text === 'Create Post' || text.includes('Create Post');
+		});
+
+		if (!createBtn) {
+			const spans = Array.from(document.querySelectorAll('span'));
+			const createSpan = spans.find(s => s.textContent?.trim() === 'Create Post');
+			if (createSpan) {
+				createBtn = createSpan.closest('button, [role="button"]');
+			}
+		}
+
 		if (!createBtn) throw new Error('Create Post button not found');
-		createBtn.click();
+		const dispatchClick = (el) => {
+			el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+			el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+			el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+		};
+
+		dispatchClick(createBtn);
 		console.log('[DH Auto Poster] Clicked Create Post');
 
 		// Wait for modal to appear
@@ -46,7 +63,7 @@ async function publishToDailyhunt(imageBase64, quote, sendResponse) {
 		);
 		
 		if (!textarea) throw new Error('Title textarea not found');
-		textarea.value = quote;
+		textarea.value = 'शानदार वाक्य | फॉलो जरूर करें | ज़िन्दगी को सीख देने वाले वाक्य | ज़िन्दगी में यह वाक्य आपको हौसला देंगे | हमे फॉलो करना ना भूले | लाइक जरूर करें | व्हाट्सएप के लिए शानदार स्टैट्स जबरदस्त व्हाट्सएप स्टेटस |';
 		textarea.dispatchEvent(new Event('input', { bubbles: true }));
 		textarea.dispatchEvent(new Event('change', { bubbles: true }));
 		textarea.focus();
@@ -100,12 +117,64 @@ async function publishToDailyhunt(imageBase64, quote, sendResponse) {
 		if (nextBtn) {
 			nextBtn.click();
 			console.log('[DH Auto Poster] Clicked Next');
-			await new Promise(resolve => setTimeout(resolve, 1500));
+			await new Promise(resolve => setTimeout(resolve, 2500));
+		}
+
+		// Step 7: Final genre/subgenre selection and publish
+		const finalDropdowns = Array.from(document.querySelectorAll('.ant-select-selection__rendered'));
+		const genreDropdown = finalDropdowns.find(el => el.textContent.includes('Genre'));
+		if (genreDropdown) {
+			genreDropdown.click();
+			await new Promise(resolve => setTimeout(resolve, 800));
+			const genreOption = Array.from(document.querySelectorAll('[role="option"], li'))
+				.find(el => el.textContent.includes('Greeting') || el.textContent.includes('Greetings') || el.textContent.includes('Greeting & Thoughts'));
+			if (genreOption) {
+				genreOption.click();
+				console.log('[DH Auto Poster] Selected genre');
+				await new Promise(resolve => setTimeout(resolve, 800));
+			}
+		}
+
+		const subgenreDropdown = Array.from(document.querySelectorAll('.ant-select-selection__rendered'))
+			.find(el => el.textContent.includes('Subgenre') || el.textContent.includes('Inspiration'));
+		if (subgenreDropdown) {
+			subgenreDropdown.click();
+			await new Promise(resolve => setTimeout(resolve, 800));
+			const subgenreOption = Array.from(document.querySelectorAll('[role="option"], li'))
+				.find(el => el.textContent.includes('Inspiration') || el.textContent.includes('Quotes'));
+			if (subgenreOption) {
+				subgenreOption.click();
+				console.log('[DH Auto Poster] Selected subgenre');
+				await new Promise(resolve => setTimeout(resolve, 800));
+			}
+		}
+
+		// Step 8: Select language if available
+		const languageDropdown = Array.from(document.querySelectorAll('.ant-select-selection__rendered'))
+			.find(el => el.textContent.includes('Language of the post') || el.textContent.includes('Language'));
+		if (languageDropdown) {
+			languageDropdown.click();
+			await new Promise(resolve => setTimeout(resolve, 800));
+			const languageOption = Array.from(document.querySelectorAll('[role="option"], li'))
+				.find(el => el.textContent.includes('Hindi'));
+			if (languageOption) {
+				languageOption.click();
+				console.log('[DH Auto Poster] Selected language: Hindi');
+				await new Promise(resolve => setTimeout(resolve, 800));
+			}
+		}
+
+		const publishButton = Array.from(document.querySelectorAll('button'))
+			.find(b => b.textContent.trim() === 'Publish' || b.textContent.includes('Publish'));
+		if (publishButton) {
+			publishButton.click();
+			console.log('[DH Auto Poster] Clicked Publish');
+			await new Promise(resolve => setTimeout(resolve, 2000));
 		}
 
 		sendResponse({
 			success: true,
-			message: 'Image uploaded and moved to next step!'
+			message: 'Image uploaded, genre selected, and publish clicked.'
 		});
 	} catch (error) {
 		console.error('[DH Auto Poster] Error:', error);
